@@ -1,0 +1,8 @@
+node_modules
+dist
+
+# Every env file carries ANALYSIS_SERVICE_KEY, the shared secret the backend
+# authenticates with. Only the example, which has it blank, is committed.
+.env
+.env.*
+!.env.example

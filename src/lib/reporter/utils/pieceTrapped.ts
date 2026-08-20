@@ -1,0 +1,75 @@
+/*
+ * cv-analysis — Chessveda's chess analysis service
+ * Copyright (C) 2026 Midas 24x7 Games Private Limited
+ *
+ * This file is derived from WintrChess
+ * (https://github.com/WintrCat/wintrchess), Copyright (C) WintrCat and
+ * contributors, and was modified by Midas 24x7 Games Private Limited
+ * in 2026. See the NOTICE file for the list of derived files and what
+ * changed.
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details. You should have received a copy of the licence along with
+ * this program; see the LICENSE file.
+ */
+
+import { Chess, KING } from "chess.js";
+
+import { BoardPiece } from "../types/BoardPiece";
+import { isPieceSafe } from "./pieceSafety";
+import { moveCreatesGreaterThreat } from "./dangerLevels";
+import { adaptPieceColour } from "@/constants/PieceColour";
+import { setFenTurn } from "@/lib/utils/chess";
+
+/**
+ * @description Returns whether a piece is trapped. If a piece is unsafe on its
+ * current square and also in every square it can move to, it is trapped. If
+ * danger levels is enabled, it is also trapped if moving it allows the
+ * opponent a larger counterthreat.
+ */
+export function isPieceTrapped(
+    board: Chess,
+    piece: BoardPiece,
+    dangerLevels = true
+) {
+    const calibratedBoard = new Chess(
+        setFenTurn(board.fen(), adaptPieceColour(piece.color))
+    );
+
+    const standingPieceSafety = isPieceSafe(calibratedBoard, piece);
+
+    const pieceMoves = calibratedBoard.moves({
+        square: piece.square,
+        verbose: true
+    });
+
+    const allMovesUnsafe = pieceMoves.every(move => {
+        if (move.captured == KING) return false;
+
+        const escapeBoard = new Chess(calibratedBoard.fen());
+
+        if (
+            dangerLevels
+            && moveCreatesGreaterThreat(escapeBoard, piece, move)
+        ) return true;
+
+        const escapeMove = escapeBoard.move(move);
+
+        const escapedPieceSafety = isPieceSafe(
+            escapeBoard,
+            { ...piece, square: escapeMove.to },
+            escapeMove
+        );
+
+        return !escapedPieceSafety;
+    });
+
+    return !standingPieceSafety && allMovesUnsafe;
+}

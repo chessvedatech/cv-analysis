@@ -1,0 +1,114 @@
+cv-analysis — Chessveda's chess analysis service
+Copyright (C) 2026 Midas 24x7 Games Private Limited
+
+Chessveda is a chess platform operated by Midas 24x7 Games Private Limited;
+"Chessveda" throughout this repository refers to that platform, and the company
+is the copyright holder.
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. See the LICENSE file for the full text.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+===============================================================================
+DERIVED FROM WINTRCHESS
+===============================================================================
+
+This service contains substantial portions of source code derived from
+WintrChess, which is licensed under the GNU General Public License v3.0:
+
+    WintrChess
+    Copyright (C) WintrCat and contributors
+    https://github.com/WintrCat/wintrchess
+
+Because cv-analysis is a derived work of GPL-3.0 software, it is itself
+distributed under the GNU General Public License v3.0 or later. The LICENSE
+file in this directory is a verbatim copy of that licence.
+
+Every derived file carries a header naming WintrChess and recording that it
+was modified by Midas 24x7 Games Private Limited in 2026. The complete
+list is below.
+
+--- Move classification and accuracy engine (src/lib/reporter/) --------------
+
+    report.ts, classify.ts, accuracy.ts, expectedPoints.ts
+    classification/pointLoss.ts, classification/brilliant.ts,
+    classification/critical.ts
+    utils/attackers.ts, utils/defenders.ts, utils/pieceSafety.ts,
+    utils/pieceTrapped.ts, utils/dangerLevels.ts, utils/criticalMove.ts,
+    utils/extractNode.ts, utils/opening.ts
+    types/RawMove.ts, types/BoardPiece.ts, types/ExtractedNode.ts,
+    types/AnalysisOptions.ts
+
+--- Position and evaluation types (src/types/) -------------------------------
+
+    Evaluation.ts, Move.ts, EngineLine.ts, BoardState.ts,
+    StateTreeNode.ts, GameAnalysis.ts
+
+--- Constants (src/constants/) -----------------------------------------------
+
+    Classification.ts, PieceColour.ts, utils.ts
+
+--- Other --------------------------------------------------------------------
+
+    src/lib/utils/chess.ts        FEN and move helpers
+    src/resources/openings.json   opening book keyed by FEN piece placement
+
+WHAT WAS CHANGED
+----------------
+
+The classification logic is a faithful port; the changes are structural rather
+than behavioural:
+
+  * Import paths and module format adapted from the upstream monorepo to this
+    standalone service.
+  * `getGameAnalysis` no longer returns `estimatedRatings`. Upstream returned
+    hard-coded placeholder values (2000/1000); rather than ship invented
+    ratings, the field was dropped.
+  * `ReportOptions` renamed to `AnalysisOptions`, matching the type it was
+    already an alias of upstream.
+  * Minor type tightening where upstream relied on `var` hoisting or produced
+    `false` in a position typed as optional.
+  * `EngineVersion` was rewritten: this service runs Stockfish as a native
+    binary, so upstream's browser-WASM identifiers do not apply. That file is
+    original work and carries no WintrChess attribution.
+
+===============================================================================
+NOT DERIVED FROM WINTRCHESS
+===============================================================================
+
+The following are original work by Midas 24x7 Games Private Limited,
+licensed under the same GPL-3.0 terms as the rest of this program:
+
+    src/engine/          Stockfish UCI driver and process pool
+    src/routes/          HTTP surface
+    src/services/        report adapter, review orchestration
+    src/middleware/      authentication, request logging, error handling
+    src/lib/utils/       logger.ts, semaphore.ts
+    src/resources/       index.ts (loader; the JSON it reads is derived)
+    src/config.ts, src/constants/EngineVersion.ts
+
+Deliberately NOT copied from WintrChess: its classification icon images. The
+badge artwork used by Chessveda's own clients is drawn independently and is
+not part of this repository.
+
+===============================================================================
+STOCKFISH
+===============================================================================
+
+Stockfish (https://stockfishchess.org) is a separate program, licensed under
+the GNU General Public License v3.0. cv-analysis invokes it as an external
+binary over the UCI protocol; it is neither linked into this program nor
+redistributed with it. Stockfish must be installed separately — see README.md.
+
+===============================================================================
+OTHER DEPENDENCIES
+===============================================================================
+
+All npm dependencies are under permissive licences (MIT, BSD-2-Clause,
+Apache-2.0) and are compatible with GPL-3.0. They are fetched at install time
+and are not redistributed in this repository.
